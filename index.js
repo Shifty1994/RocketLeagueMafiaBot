@@ -24,12 +24,4 @@ client.loadCommands(bot, false);
 
 module.exports = bot;
 
-const generalId = "746048121125076996";
-
-client.on("guildMemberAdd", (member) => {
-  member.guild.channels.cache
-    .get(rocketLeagueMafiaId)
-    .send(`<@${member.id} Welcome to the server`);
-});
-
 client.login(process.env.TOKEN);
