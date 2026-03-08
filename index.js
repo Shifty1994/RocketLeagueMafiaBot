@@ -3,7 +3,14 @@ const Discord = require("discord.js");
 require("dotenv").config();
 
 const client = new Discord.Client({
-  intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_MEMBERS", "GUILD_VOICE_STATES"],
+  intents: [
+    Discord.GatewayIntentBits.Guilds,
+    Discord.GatewayIntentBits.GuildMessages,
+    Discord.GatewayIntentBits.GuildMembers,
+    Discord.GatewayIntentBits.GuildVoiceStates,
+    Discord.GatewayIntentBits.MessageContent, // needed for prefix still
+  ],
+  partials: [Discord.Partials.Message, Discord.Partials.Channel],
 });
 
 let bot = {
@@ -21,6 +28,11 @@ client.loadCommands = (bot, reload) =>
 
 client.loadEvents(bot, false);
 client.loadCommands(bot, false);
+
+console.log("Registered slash-capable commands:");
+client.commands.forEach((cmd) => {
+  if (cmd.data) console.log(` - /${cmd.name}`);
+});
 
 module.exports = bot;
 

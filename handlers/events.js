@@ -1,4 +1,5 @@
 const { getFiles } = require("../util/functions");
+const { Events } = require("discord.js"); // ← add this line
 
 module.exports = (bot, reload) => {
   const { client } = bot;
@@ -34,8 +35,8 @@ function triggerEventHandler(bot, event, ...args) {
 function initEvents(bot) {
   const { client } = bot;
 
-  client.on("ready", () => {
-    triggerEventHandler(bot, "ready");
+  client.on(Events.ClientReady, () => {
+    triggerEventHandler(bot, Events.ClientReady);
   });
 
   client.on("messageCreate", (message) => {
@@ -43,6 +44,11 @@ function initEvents(bot) {
   });
 
   client.on("presenceUpdate", (oldPresence, newPresence) => {
-    triggerEventHandler(bot, "messageCreate", message);
+    triggerEventHandler(bot, "presenceUpdate", oldPresence, newPresence);
+  });
+
+  // ← ADD THIS NEW LISTENER
+  client.on("interactionCreate", (interaction) => {
+    triggerEventHandler(bot, "interactionCreate", interaction);
   });
 }
