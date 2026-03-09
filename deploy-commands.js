@@ -1,12 +1,16 @@
 // deploy-commands.js
-const { REST, Routes } = require("discord.js");
 require("dotenv").config();
+const { REST, Routes } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 
-const clientId = "935242930661253210"; 
-const guildId = "1069761947404345364";
 const token = process.env.TOKEN;
+const clientId = process.env.CLIENT_ID;
+
+if (!token || !clientId) {
+  console.error("Missing required env: TOKEN and/or CLIENT_ID");
+  process.exit(1);
+}
 
 const commands = [];
 
@@ -25,28 +29,29 @@ for (const folder of commandFolders) {
       commands.push(command.data.toJSON());
     } else {
       console.log(
-        `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,
+        `[WARNING] Command at ${filePath} missing "data" or "execute"`,
       );
     }
   }
 }
 
-const rest = new REST().setToken(token);
+const rest = new REST({ version: "10" }).setToken(token);
 
 (async () => {
   try {
     console.log(
-      `Started refreshing ${commands.length} application (/) commands.`,
+      `Started refreshing ${commands.length} global application (/) commands.`,
     );
 
-    // Guild commands → instant update (best for testing)
-    const data = await rest.put(
-      Routes.applicationGuildCommands(clientId, guildId),
-      { body: commands },
-    );
+    const data = await rest.put(Routes.applicationCommands(clientId), {
+      body: commands,
+    });
 
     console.log(
-      `Successfully reloaded ${data.length} application (/) commands.`,
+      `Successfully reloaded ${data.length} global application (/) commands.`,
+    );
+    console.log(
+      "Note: Global commands may take up to 1 hour to appear everywhere.",
     );
   } catch (error) {
     console.error(error);

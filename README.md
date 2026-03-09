@@ -1,61 +1,35 @@
-# Mafia Bot – Spice Up Your Raids
+<div align="center">
 
-**Have your Karazhan runs become too easy and stale?**  
-**Time to add betrayal, suspicion and chaos with Mafia!**
+# Mafia Bot – Raid Edition
 
-Turn your WoW 10-man Karazhan (or any raid/party) into a thrilling social deduction game — perfect for 10–20+ players.  
-Works especially well with **Karazhan 10-man** (classic vibe + manageable group size).
+**Turn boring Karazhan runs into chaotic betrayal games**
 
-**Extra mode** also supports Rocket League parties / custom games.
+[![Discord.js](https://img.shields.io/badge/discord.js-v14-blue?logo=discord)](https://discord.js.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-≥20-brightgreen?logo=node.js)](https://nodejs.org/)
+[![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](LICENSE)
 
-### How It Works
+</div>
 
-1. Everyone joins the **same Discord voice channel**  
+**Have your Karazhan 10-man groups become too predictable and stale?**  
+**Time to add Mafia drama, suspicion, gold incentives and maximum chaos.**
+
+This Discord bot transforms your World of Warcraft raid nights (especially **Karazhan 10-man**) into a social deduction game where some players are secretly Mafia trying to die ~3 times, one chaotic Jester wants to get voted, and everyone else tries to figure it out.
+
+**Bonus mode** also works perfectly in Rocket League parties/custom games.
+
+### How to Play (Karazhan / Raid Mode)
+
+1. Everyone joins the **same Discord voice channel**
 2. Raid leader types  
-   `n.playmafia new`  
-3. Bot secretly assigns roles via DM:  
-   - **2 Mafia** — know each other, goal = **die 3 or more times** (excl. 5+ wipe deaths) without being obvious  
-   - **1 Jester** — goal = act suspicious so people vote you at the end  
-   - **Everyone else = Town** — figure out the impostors  
-4. Bot posts clear public rules in text chat (read them!)  
-5. Play your raid / Rocket League match normally  
-   - Mafia subtly try to die ~3 times (wipes 5+ don't count)  
-   - Jester sows confusion and acts mafia-like  
-6. After the raid ends → **vote phase** in text chat  
-   - Each player names **exactly 2 suspects**  
-   - **Majority** = 5+ votes on one person
-
-### Win Conditions & Gold Split
-
-Gold is divided evenly among **all winners**:
-
-- **Jester** wins → gets 5+ votes → steals some of the gold (included in split)  
-- **Mafia** wins (individual) → each who got **≤4 votes** **and** died **3+ times** → share the gold  
-- **Town** wins (individual) → each who successfully voted **1 or 2 real Mafia** into majority → share the gold
-
-### Commands
-
-| Command            | Description                                      |
-|--------------------|--------------------------------------------------|
-| `n.playmafia`      | Classic mode – 1 random Mafia                    |
-| `n.playmafia new`  | Recommended: 2 Mafia + 1 Jester (WoW RL ready)  |
-
-### Why Players Love It
-
-- Turns boring farm runs into **high-stakes drama**  
-- Mafia players get creative with "accidental" deaths  
-- Jester creates hilarious paranoia  
-- Town feels like detectives  
-- Gold rewards actually matter — bragging rights included  
-- Works in **WoW Karazhan 10-man** perfectly (ideal player count)  
-- Bonus: same bot works for **Rocket League parties** too
-
-**Ready to betray your guildies?**  
-Join voice → type `n.playmafia new` → let the chaos begin 😈
-
-Made for WoW raiders who want more than just mechanics.  
-Questions? DM the bot owner or suggest features!
-
+   `/playmafia`  
+   (or `/playmafia mode:kara force:true` if testing with few people)
+3. Bot secretly assigns roles via DM:
+   - **~20% Mafia** — know each other, goal = **die 3+ times** (excl. big wipes)
+   - **~10% Jester** — goal = act suspicious so people vote you at the end
+   - Rest = **Town** — identify the impostors
+4. Play the raid normally
+5. After the run → vote in text chat (each player names suspects)
+6. Gold is split based on votes + death count
 
 20% are mafia, 10% jester, 70% town
 
@@ -67,21 +41,47 @@ Questions? DM the bot owner or suggest features!
 | 10      | 2     | 1      | 7    |
 | 20      | 4     | 2      | 14   |
 
+### Win Conditions & Gold Split
 
+Gold is divided evenly among **all winners**:
 
+- **Jester** → gets majority votes → share gold (included in split)
+- **Mafia** → died 3+ times **and** no majority votes against them → share gold
+- **Town** → voted at least one real Mafia into majority → share gold
 
- --   --- -- - - -- - -
-For me: 
+### Commands
 
-commands:
-insallt the bot:
-npm install
+| Command                       | Description                                      |
+|-------------------------------|--------------------------------------------------|
+| `/playmafia`                  | Karazhan/Raid mode (auto-scales roles)           |
+| `/playmafia mode:kara`        | Explicit Karazhan mode                           |
+| `/playmafia mode:rl`          | Rocket League mode (1 secret Mafia)              |
+| `/playmafia force:true`       | Force start even with < 2 players (testing)      |
 
-Run the bot:
-npm run start
+### Features
 
-Go to the application. 
-discord.com/developers/
-Get the TOKEN
+- Dynamic role scaling based on player count
+- Private DMs for role & team info
+- Beautiful public rules embed
+- Silent handling of closed DMs
+- Works in any voice channel
 
-Create .env add TOKEN = ........
+### Self-Hosting
+
+1. Clone the repo
+   ```bash
+   git clone https://github.com/Shifty1994/Mafia-Bot
+   cd mafia-bot
+
+2. Install dependencies
+    npm install
+
+3. Create .env from .env.example and fill in:
+    TOKEN=your-bot-token-here
+    CLIENT_ID=your-application-id-here
+
+4. Deploy slash commands (run once, or after changes)
+    node deploy-commands.js
+
+5. Start the bot
+    npm run start 

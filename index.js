@@ -1,6 +1,11 @@
 const Discord = require("discord.js");
 require("dotenv").config();
 
+if (!process.env.TOKEN) {
+  console.error("ERROR: No TOKEN found in .env");
+  process.exit(1);
+}
+
 const client = new Discord.Client({
   intents: [
     Discord.GatewayIntentBits.Guilds,
@@ -11,7 +16,6 @@ const client = new Discord.Client({
 
 let bot = {
   client,
-  owners: ["163409757883858945"],
 };
 
 client.commands = new Discord.Collection();

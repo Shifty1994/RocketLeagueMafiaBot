@@ -1,18 +1,21 @@
 {
-  "name": "rocketleaguemafiabot",
+  "name": "mafia-bot",
   "version": "1.0.0",
-  "description": "",
+  "description": "Discord bot for Mafia-style social deduction in voice channels (WoW raids & Rocket League)",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "deploy": "node deploy-commands.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Shifty1994",
+  "license": "MIT",
   "dependencies": {
-    "@discordjs/rest": "^2.6.0",
-    "discord-api-types": "^0.38.41",
-    "discord.js": "^14.25.1",
-    "dotenv": "^14.2.0"
+    "discord.js": "^14.15.3",
+    "@discordjs/rest": "^2.4.0",
+    "discord-api-types": "^0.37.114",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
