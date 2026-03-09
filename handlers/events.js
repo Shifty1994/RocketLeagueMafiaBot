@@ -39,10 +39,6 @@ function initEvents(bot) {
     triggerEventHandler(bot, Events.ClientReady);
   });
 
-  client.on("messageCreate", (message) => {
-    triggerEventHandler(bot, "messageCreate", message);
-  });
-
   client.on("presenceUpdate", (oldPresence, newPresence) => {
     triggerEventHandler(bot, "presenceUpdate", oldPresence, newPresence);
   });

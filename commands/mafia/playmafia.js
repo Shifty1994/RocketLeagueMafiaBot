@@ -9,7 +9,6 @@ module.exports = {
   category: "mafia",
   description: "Assigns mafia roles in the current voice channel",
 
-  // Slash Command Definition
   data: new SlashCommandBuilder()
     .setName("playmafia")
     .setDescription("Start a Mafia game in your current voice channel")
@@ -32,9 +31,8 @@ module.exports = {
         .setRequired(false),
     ),
 
-  // Slash command execution
   async execute(interaction) {
-    // Defer immediately – do NOT pass ephemeral (defaults to false = visible)
+    // Defer immediately (no ephemeral option needed - defaults to visible)
     await interaction.deferReply().catch((err) => {
       console.error("Defer failed:", err);
     });
@@ -44,25 +42,10 @@ module.exports = {
 
     await runMafiaLogic(interaction, mode, forceStart, true);
   },
-
-  // Prefix command execution (legacy support)
-  run: async ({ client, message, args }) => {
-    const forceStart = args.includes("force");
-    const mode = args[0]?.toLowerCase() || "kara";
-
-    // Optional gentle migration notice (remove if you no longer need it)
-    // await message.reply({
-    //   content: 'Tip: Try the new slash command **/playmafia** for a better experience!',
-    //   allowedMentions: { repliedUser: false }
-    // }).catch(() => {});
-
-    await runMafiaLogic(message, mode, forceStart, false);
-  },
 };
 
-// Shared core logic (used by both prefix and slash)
-async function runMafiaLogic(context, mode, forceStart, isSlash) {
-  // Helper to reply (handles string, embeds, options safely)
+// Shared core logic (now only used by slash)
+async function runMafiaLogic(interaction, mode, forceStart) {
   const reply = async (firstArg, secondArg = {}) => {
     let options = {};
 
@@ -75,7 +58,7 @@ async function runMafiaLogic(context, mode, forceStart, isSlash) {
       options = { ...secondArg };
     }
 
-    // Convert deprecated ephemeral to flags
+    // Convert old ephemeral syntax if someone accidentally left it
     if (options.ephemeral === true) {
       options.flags = (options.flags || 0) | MessageFlags.Ephemeral;
       delete options.ephemeral;
@@ -83,27 +66,22 @@ async function runMafiaLogic(context, mode, forceStart, isSlash) {
       delete options.ephemeral;
     }
 
-    if (isSlash) {
-      // Since we deferred in execute, prefer editReply → fallback to followUp
-      if (context.deferred || context.replied) {
-        return context.editReply(options).catch((err) => {
-          console.error("editReply failed:", err);
-          return context.followUp(options);
-        });
-      }
-      return context.reply(options);
+    // Since we always defer in execute, use editReply → fallback followUp
+    if (interaction.deferred || interaction.replied) {
+      return interaction.editReply(options).catch((err) => {
+        console.error("editReply failed:", err);
+        return interaction.followUp(options);
+      });
     }
 
-    return context.channel.send(options);
+    return interaction.reply(options);
   };
 
-  const voiceChannel = isSlash
-    ? context.member?.voice?.channel
-    : context.member?.voice?.channel;
+  const voiceChannel = interaction.member?.voice?.channel;
 
   if (!voiceChannel) {
     return reply("You must be in a voice channel to use this command.", {
-      ephemeral: isSlash,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -112,8 +90,8 @@ async function runMafiaLogic(context, mode, forceStart, isSlash) {
 
   if (!forceStart && memberArray.length < 2) {
     return reply(
-      "Not enough players (need at least 2 non-bot members). Use `force` to override.",
-      { ephemeral: isSlash },
+      "Not enough players (need at least 2 non-bot members). Use `force: true` to override.",
+      { flags: MessageFlags.Ephemeral },
     );
   }
 
