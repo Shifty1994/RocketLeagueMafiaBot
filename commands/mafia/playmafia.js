@@ -157,7 +157,7 @@ async function runMafiaLogic(interaction, mode, forceStart) {
         inline: false,
       },
     )
-    .setFooter({ text: "Roles sent privately • Good luck!" })
+    .setFooter({ text: "Roles sent privately • Good luck and have a chaotic raid!" })
     .setTimestamp();
 
   await reply({ embeds: [publicEmbed] });
@@ -201,9 +201,4 @@ async function runMafiaLogic(interaction, mode, forceStart) {
       // silent fail
     }
   }
-
-  // Final confirmation
-  await reply(
-    "Roles assigned privately.\nGood luck and have a chaotic raid! 🔥",
-  );
 }
