@@ -40,6 +40,12 @@ module.exports = {
     const mode = interaction.options.getString("mode") || "kara";
     const forceStart = interaction.options.getBoolean("force") || false;
 
+    const userId = interaction.user.id;
+
+    console.log(
+      `[${new Date().toISOString()}] /playmafia used | user:${userId} mode:${mode} | ${forceStart}`,
+    );
+
     await runMafiaLogic(interaction, mode, forceStart, true);
   },
 };
@@ -157,7 +163,9 @@ async function runMafiaLogic(interaction, mode, forceStart) {
         inline: false,
       },
     )
-    .setFooter({ text: "Roles sent privately • Good luck and have a chaotic raid!" })
+    .setFooter({
+      text: "Roles sent privately • Good luck and have a chaotic raid!",
+    })
     .setTimestamp();
 
   await reply({ embeds: [publicEmbed] });

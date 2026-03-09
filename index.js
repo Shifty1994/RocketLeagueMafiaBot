@@ -29,3 +29,11 @@ client.loadEvents(bot, false);
 client.loadCommands(bot, false);
 
 client.login(process.env.TOKEN);
+
+// Keep-alive heartbeat for Railway (prevents premature SIGTERM)
+setInterval(
+  () => {
+    console.log(`Heartbeat: Bot is alive - ${new Date().toISOString()}`);
+  },
+  5 * 60 * 1000,
+); // Log every 5 minutes
