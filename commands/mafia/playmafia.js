@@ -37,7 +37,7 @@ module.exports = {
     try {
       await interaction.reply({
         content: "Starting Mafia game... (hold on if the bot was asleep)",
-        flags: MessageFlags.Ephemeral, // ← modern replacement
+        flags: MessageFlags.Ephemeral, // modern, no warning
       });
     } catch (err) {
       console.error(
@@ -46,11 +46,6 @@ module.exports = {
       );
       return; // Exit early – can't do anything else
     }
-
-    // Now safe to defer the main visible response
-    await interaction.deferReply().catch((err) => {
-      console.error("Main defer failed:", err);
-    });
 
     console.log(
       `[${new Date().toISOString()}] /playmafia used by ${interaction.user.tag} ` +
