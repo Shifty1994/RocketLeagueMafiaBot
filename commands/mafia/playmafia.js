@@ -157,7 +157,7 @@ async function runMafiaLogic(interaction, mode, forceStart) {
             "**Mafia wins** if they complete **8 or more** objectives together, and not get found out.\n" +
             "**Town wins** if they complete **1 or more** objectives **AND** correctly vote out at least one Mafia at the end.\n" +
             "**Jester wins** if they receive majority votes at the end.\n\n" +
-            "Honor system — report results at the end!",
+            "**At the end of the raid**, **all players vote** for who they think are the Mafias (honor system).",
           inline: false,
         },
         {
@@ -184,9 +184,8 @@ async function runMafiaLogic(interaction, mode, forceStart) {
     const mafiaText =
       `**${mafiaNames}** are **Mafia** in **Sabotage** mode.\n\n` +
       `Goal: Complete **8 or more** of the 10 objectives together (team total).\n` +
-      `One of you can do many, or split them — doesn't matter.\n` +
-      `Be subtle — Town only needs 1 objective + correct vote to win.\n` +
-      `Jester still wins if voted as Mafia.`;
+      `One of you can do many, or split them.\n` +
+      `Don't be too obvious so town doesn't suspect you.\n`;
 
     for (const m of mafia) {
       try {
@@ -198,8 +197,7 @@ async function runMafiaLogic(interaction, mode, forceStart) {
 
     const jesterText =
       `You are the **Jester**.\n\n` +
-      `Your goal: Make people think you're Mafia so they vote for you at the end.\n` +
-      `(Same as classic mode — you win if majority votes you.)`;
+      `Your goal: Make people think you're Mafia so they vote for you at the end.\n`;
 
     for (const j of jester) {
       try {
@@ -212,9 +210,9 @@ async function runMafiaLogic(interaction, mode, forceStart) {
     const townText =
       `You are **Town** in **Sabotage** mode.\n\n` +
       `Goal: Complete **at least 1** objective **AND** correctly vote out at least one Mafia at the end.\n` +
-      `Mafia wins if they complete 8+ objectives together.\n` +
+      `Mafia wins if they complete 8+ objectives together and you don't vote them out.\n` +
       `Jester wins if voted as Mafia.\n` +
-      `Stay sharp!`;
+      `Keep your eyes peeled for suspicious behavior!`;
 
     for (const t of town) {
       try {
