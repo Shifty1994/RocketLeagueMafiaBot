@@ -152,9 +152,9 @@ async function runMafiaLogic(interaction, mode, forceStart) {
         {
           name: "How Sabotage Works",
           value:
-            "This mode is **mission/objective-based** (no death focus).\n" +
-            "There are **10 secret objectives**.\n\n" +
-            "**Mafia wins** if they complete **8 or more** objectives together.\n" +
+            "This mode is **mission/objective-based**.\n" +
+            "There are **10 objectives**.\n\n" +
+            "**Mafia wins** if they complete **8 or more** objectives together, and not get found out.\n" +
             "**Town wins** if they complete **1 or more** objectives **AND** correctly vote out at least one Mafia at the end.\n" +
             "**Jester wins** if they receive majority votes at the end.\n\n" +
             "Honor system — report results at the end!",
