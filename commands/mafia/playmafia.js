@@ -33,7 +33,25 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    // Simple console log
+    // IMMEDIATE acknowledge – prevents 10062 timeout
+    try {
+      await interaction.reply({
+        content: "Starting Mafia game... (hold on if the bot was asleep)",
+        flags: MessageFlags.Ephemeral, // ← modern replacement
+      });
+    } catch (err) {
+      console.error(
+        "Immediate reply failed (interaction already timed out):",
+        err,
+      );
+      return; // Exit early – can't do anything else
+    }
+
+    // Now safe to defer the main visible response
+    await interaction.deferReply().catch((err) => {
+      console.error("Main defer failed:", err);
+    });
+
     console.log(
       `[${new Date().toISOString()}] /playmafia used by ${interaction.user.tag} ` +
         `(ID: ${interaction.user.id}) in ${interaction.guild?.name || "DM"} ` +
@@ -41,15 +59,10 @@ module.exports = {
         `| force: ${interaction.options.getBoolean("force") ? "yes" : "no"}`,
     );
 
-    // Defer reply
-    await interaction.deferReply().catch((err) => {
-      console.error("Defer failed:", err);
-    });
-
     const mode = interaction.options.getString("mode") || "kara";
     const forceStart = interaction.options.getBoolean("force") || false;
 
-    await runMafiaLogic(interaction, mode, forceStart, true);
+    await runMafiaLogic(interaction, mode, forceStart);
   },
 };
 
@@ -67,10 +80,9 @@ async function runMafiaLogic(interaction, mode, forceStart) {
       options = { ...secondArg };
     }
 
-    if (options.ephemeral === true) {
+    // Modern: use flags instead of ephemeral
+    if (options.ephemeral) {
       options.flags = (options.flags || 0) | MessageFlags.Ephemeral;
-      delete options.ephemeral;
-    } else if (options.ephemeral === false) {
       delete options.ephemeral;
     }
 
@@ -102,9 +114,7 @@ async function runMafiaLogic(interaction, mode, forceStart) {
     );
   }
 
-  // ────────────────────────────────────────────────
-  //                Rocket League mode (rl)
-  // ────────────────────────────────────────────────
+  // Rocket League mode
   if (mode === "rl") {
     const mafiaMember = members.random();
 
@@ -124,9 +134,7 @@ async function runMafiaLogic(interaction, mode, forceStart) {
 
   const totalPlayers = memberArray.length;
 
-  // ────────────────────────────────────────────────
-  //          Karazhan Sabotage mode (sabotage)
-  // ────────────────────────────────────────────────
+  // Karazhan Sabotage mode
   if (mode === "sabotage") {
     const mafiaCount = Math.max(1, Math.floor(totalPlayers * 0.2));
     const jesterCount = Math.floor(totalPlayers * 0.1);
@@ -138,7 +146,6 @@ async function runMafiaLogic(interaction, mode, forceStart) {
 
     const mafiaNames = mafia.map((m) => m.user.username).join(" & ");
 
-    // Public embed – Sabotage
     const publicEmbed = new EmbedBuilder()
       .setColor(0x8b0000)
       .setTitle("🚨 Karazhan Sabotage Started! 🚨")
@@ -154,7 +161,7 @@ async function runMafiaLogic(interaction, mode, forceStart) {
             "There are **10 secret objectives**.\n\n" +
             "**Mafia wins** if they complete **8 or more** objectives together.\n" +
             "**Town wins** if they complete **1 or more** objectives **AND** correctly vote out at least one Mafia at the end.\n" +
-            "**Jester wins** if they receive majority votes at the end (same as classic).\n\n" +
+            "**Jester wins** if they receive majority votes at the end.\n\n" +
             "Honor system — report results at the end!",
           inline: false,
         },
@@ -179,7 +186,6 @@ async function runMafiaLogic(interaction, mode, forceStart) {
 
     await reply({ embeds: [publicEmbed] });
 
-    // Mafia DMs (Sabotage)
     const mafiaText =
       `**${mafiaNames}** are **Mafia** in **Sabotage** mode.\n\n` +
       `Goal: Complete **8 or more** of the 10 objectives together (team total).\n` +
@@ -195,7 +201,6 @@ async function runMafiaLogic(interaction, mode, forceStart) {
       }
     }
 
-    // Jester DMs (same as classic)
     const jesterText =
       `You are the **Jester**.\n\n` +
       `Your goal: Make people think you're Mafia so they vote for you at the end.\n` +
@@ -209,7 +214,6 @@ async function runMafiaLogic(interaction, mode, forceStart) {
       }
     }
 
-    // Town DMs (Sabotage)
     const townText =
       `You are **Town** in **Sabotage** mode.\n\n` +
       `Goal: Complete **at least 1** objective **AND** correctly vote out at least one Mafia at the end.\n` +
@@ -231,10 +235,7 @@ async function runMafiaLogic(interaction, mode, forceStart) {
     return;
   }
 
-  // ────────────────────────────────────────────────
-  //          Classic Karazhan mode (default = kara)
-  // ────────────────────────────────────────────────
-
+  // Classic Karazhan mode (default)
   const shuffled = [...memberArray].sort(() => 0.5 - Math.random());
 
   const mafiaCount = Math.max(1, Math.floor(totalPlayers * 0.2));
@@ -246,7 +247,6 @@ async function runMafiaLogic(interaction, mode, forceStart) {
 
   const mafiaNames = mafia.map((m) => m.user.username).join(" & ");
 
-  // Public embed for classic mode
   const publicEmbed = new EmbedBuilder()
     .setColor(0x8b0000)
     .setTitle("🚨 Mafia Raid Started! 🚨")
@@ -284,7 +284,6 @@ async function runMafiaLogic(interaction, mode, forceStart) {
 
   await reply({ embeds: [publicEmbed] });
 
-  // Mafia DMs (classic)
   const mafiaText =
     `**${mafiaNames}** are **Mafia**.\n\n` +
     `Your goal: **Die 3 or more times** during the raid (excluding wipes).\n` +
@@ -298,10 +297,7 @@ async function runMafiaLogic(interaction, mode, forceStart) {
     }
   }
 
-  // Jester DMs
-  const jesterText =
-    `You are the **Jester**.\n\n` +
-    `Your goal: Make people think you're Mafia so they vote for you.`;
+  const jesterText = `You are the **Jester**.\n\nYour goal: Make people think you're Mafia so they vote for you.`;
 
   for (const j of jester) {
     try {
@@ -311,10 +307,7 @@ async function runMafiaLogic(interaction, mode, forceStart) {
     }
   }
 
-  // Town DMs
-  const townText =
-    `You are **Town**.\n\n` +
-    `Try to figure out who the Mafia are and vote correctly at the end!`;
+  const townText = `You are **Town**.\n\nTry to figure out who the Mafia are and vote correctly at the end!`;
 
   for (const t of town) {
     try {
