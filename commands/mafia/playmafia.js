@@ -157,7 +157,7 @@ async function runMafiaLogic(interaction, mode, forceStart) {
             "**Mafia wins** if they complete **8 or more** objectives together, and not get found out.\n" +
             "**Town wins** if they complete **1 or more** objectives **AND** correctly vote out at least one Mafia at the end.\n" +
             "**Jester wins** if they receive majority votes at the end.\n\n" +
-            "**At the end of the raid**, **all players vote** for who they think are the Mafias (honor system).",
+            "**End of raid voting**: Everyone gets **as many votes as there are Mafia** (e.g. 2 Mafia = 2 votes each).",
           inline: false,
         },
         {
