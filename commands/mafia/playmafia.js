@@ -48,8 +48,7 @@ module.exports = {
     }
 
     console.log(
-      `[${new Date().toISOString()}] /playmafia used by ${interaction.user.tag} ` +
-        `(ID: ${interaction.user.id}) in ${interaction.guild?.name || "DM"} ` +
+      `[${new Date().toISOString()}] /playmafia used ` +
         `| mode: ${interaction.options.getString("mode") || "kara"} ` +
         `| force: ${interaction.options.getBoolean("force") ? "yes" : "no"}`,
     );
