@@ -19,19 +19,16 @@ module.exports = {
         .setRequired(false)
         .addChoices(
           {
-            name: "Karazhan Classic",
+            name: "Karazhan Classic - Death-based, die 3 times",
             value: "kara",
-            description: "Death-based mode - Mafia tries to die 3 times",
           },
           {
-            name: "Karazhan Sabotage",
+            name: "Karazhan Sabotage - 10 objectives",
             value: "sabotage",
-            description: "Mission-based - 10 objectives",
           },
           {
-            name: "Simple Mafia",
+            name: "Simple Mafia - 1 secret Mafia",
             value: "simple",
-            description: "1 secret Mafia",
           },
         ),
     )
