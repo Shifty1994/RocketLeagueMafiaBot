@@ -15,12 +15,24 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName("mode")
-        .setDescription("Game mode")
+        .setDescription("Choose the game mode")
         .setRequired(false)
         .addChoices(
-          { name: "Classic Karazhan (death-based)", value: "kara" },
-          { name: "Karazhan Sabotage (missions)", value: "sabotage" },
-          { name: "Simple Mafia (1 mafia)", value: "simple" },
+          {
+            name: "Karazhan Classic",
+            value: "kara",
+            description: "Death-based mode - Mafia tries to die 3 times",
+          },
+          {
+            name: "Karazhan Sabotage",
+            value: "sabotage",
+            description: "Mission-based - 10 objectives",
+          },
+          {
+            name: "Simple Mafia",
+            value: "simple",
+            description: "1 secret Mafia",
+          },
         ),
     )
     .addBooleanOption((option) =>
