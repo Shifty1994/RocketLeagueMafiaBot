@@ -119,7 +119,7 @@ async function runMafiaLogic(interaction, mode, forceStart) {
             `• The **Mafia** gets **3 points** if they lose the game AND avoid majority votes`,
         )
         .setFooter({
-          text: "One person is the traitor... Good luck!",
+          text: "One person is the traitor. Good luck!",
         })
         .setTimestamp();
 
