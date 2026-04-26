@@ -33,28 +33,17 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    // IMMEDIATE acknowledge – prevents 10062 timeout
-    try {
-      await interaction.reply({
-        content: "Starting Mafia game... (hold on if the bot was asleep)",
-        flags: MessageFlags.Ephemeral, // modern, no warning
-      });
-    } catch (err) {
-      console.error(
-        "Immediate reply failed (interaction already timed out):",
-        err,
-      );
-      return; // Exit early – can't do anything else
-    }
-
-    console.log(
-      `[${new Date().toISOString()}] /playmafia used ` +
-        `| mode: ${interaction.options.getString("mode") || "kara"} ` +
-        `| force: ${interaction.options.getBoolean("force") ? "yes" : "no"}`,
-    );
-
     const mode = interaction.options.getString("mode") || "kara";
     const forceStart = interaction.options.getBoolean("force") || false;
+
+    // Simple defer - this worked before
+    await interaction.deferReply().catch((err) => {
+      console.error("Defer failed:", err);
+    });
+
+    console.log(
+      `[${new Date().toISOString()}] /playmafia used | mode: ${mode} | force: ${forceStart}`,
+    );
 
     await runMafiaLogic(interaction, mode, forceStart);
   },
@@ -74,12 +63,7 @@ async function runMafiaLogic(interaction, mode, forceStart) {
       options = { ...secondArg };
     }
 
-    // Modern: use flags instead of ephemeral
-    if (options.ephemeral) {
-      options.flags = (options.flags || 0) | MessageFlags.Ephemeral;
-      delete options.ephemeral;
-    }
-
+    // Simple version - no forced ephemeral
     if (interaction.deferred || interaction.replied) {
       return interaction.editReply(options).catch((err) => {
         console.error("editReply failed:", err);
