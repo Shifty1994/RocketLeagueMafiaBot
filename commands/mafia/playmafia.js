@@ -16,13 +16,13 @@ module.exports = {
       option
         .setName("mode")
         .setDescription(
-          "Mode: kara (death), sabotage (missions), rl (Rocket League). Default: kara",
+          "Game mode: kara (death), sabotage (missions), simple (single mafia)",
         )
         .setRequired(false)
         .addChoices(
           { name: "Classic Karazhan (death-based)", value: "kara" },
           { name: "Karazhan Sabotage (missions)", value: "sabotage" },
-          { name: "Rocket League", value: "rl" },
+          { name: "Simple Mafia (single mafia)", value: "simple" },
         ),
     )
     .addBooleanOption((option) =>
@@ -92,19 +92,40 @@ async function runMafiaLogic(interaction, mode, forceStart) {
     );
   }
 
-  // Rocket League mode
-  if (mode === "rl") {
+  // ────────────────────────────────────────────────
+  //                Simple Mafia Mode (Single Mafia)
+  // ────────────────────────────────────────────────
+  if (mode === "simple" || mode === "rl") {
     const mafiaMember = members.random();
 
     try {
       await mafiaMember.send(
-        "You are **Mafia**.\nTry to lose the game but don’t let others figure it out 😈",
+        "You are **Mafia**.\n\n" +
+          "Your goal: Try to lose/throw the game without getting caught.\n",
       );
-      await reply(`Mafia role assigned privately 👀 (Rocket League mode)`);
+
+      // Clean public embed with new scoring
+      const simpleEmbed = new EmbedBuilder()
+        .setColor(0x8b0000)
+        .setTitle("🕵️ Simple Mafia Mode Activated!")
+        .setDescription(
+          `A single **Mafia** has been chosen and received their role via DM.\n\n` +
+            `**How to play:**\n` +
+            `• The Mafia tries to lose/throw the game without being obvious.\n` +
+            `• At the end of each round/game, everyone votes who they think the Mafia is.\n\n` +
+            `**Example of Scoring:**\n` +
+            `• Each player gets **1 point** for winning the game (except the Mafia)\n` +
+            `• Each player gets **1 point** for correctly guessing the Mafia\n` +
+            `• The **Mafia** gets **3 points** if they lose the game AND avoid majority votes`,
+        )
+        .setFooter({
+          text: "One person is the traitor... Good luck!",
+        })
+        .setTimestamp();
+
+      await reply({ embeds: [simpleEmbed] });
     } catch {
-      await reply(
-        `Could not DM ${mafiaMember.user.tag} — DMs probably closed.`,
-      );
+      await reply(`Could not DM the chosen Mafia — DMs probably closed.`);
     }
 
     return;
