@@ -30,10 +30,7 @@ client.loadCommands(bot, false);
 
 client.login(process.env.TOKEN);
 
-// Keep-alive heartbeat for Railway (prevents premature SIGTERM)
-setInterval(
-  () => {
-    console.log(`Heartbeat: Bot is alive - ${new Date().toISOString()}`);
-  },
-  5 * 60 * 1000,
-); // Log every 5 minutes
+// Silent keep-alive heartbeat (prevents Railway from killing the bot)
+setInterval(() => {
+  // Do nothing visible - just stay alive
+}, 5 * 60 * 1000);   // Every 5 minutes
