@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const roundend = require("./roundend");
+const scoreboard = require("./scoreboard.js");
 
 module.exports = {
   name: "showscores",
@@ -10,7 +10,7 @@ module.exports = {
     .setDescription("Show total scoreboard"),
 
   async execute(interaction) {
-    const scoreboard = roundend.getScoreboard();
+    const scoreboard = scoreboard.getScoreboard();
     if (scoreboard.size === 0) {
       return interaction.reply("No points recorded yet.");
     }

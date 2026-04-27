@@ -53,23 +53,23 @@ module.exports = {
           const [, action, userId] = customId.split("_");
           const amount = action === "add" ? 1 : -1;
 
-          const roundendCommand = bot.client.commands.get("roundend");
-          if (roundendCommand?.updateScoreboard) {
-            roundendCommand.updateScoreboard(userId, amount);
+          const scoreboardCommand = bot.client.commands.get("scoreboard");
+          if (scoreboardCommand?.updateScoreboard) {
+            scoreboardCommand.updateScoreboard(userId, amount);
           }
 
           // Refresh the scoreboard
           const voiceChannel = interaction.member?.voice?.channel;
           if (voiceChannel) {
             const members = voiceChannel.members.filter((m) => !m.user.bot);
-            const roundend = bot.client.commands.get("roundend");
-            const { content, rows } = roundend.createScoreboard(members);
+            const scoreboard = bot.client.commands.get("scoreboard");
+            const { content, rows } = scoreboard.createScoreboard(members);
 
             await interaction.editReply({ content, components: rows });
           }
         } else if (customId === "score_endmatch") {
-          const roundendCommand = bot.client.commands.get("roundend");
-          if (!roundendCommand) return;
+          const scoreboardCommand = bot.client.commands.get("scoreboard");
+          if (!scoreboardCommand) return;
 
           // Show final scoreboard as nice embed
           const members =
@@ -79,7 +79,8 @@ module.exports = {
           let finalText = "";
 
           members.forEach((member) => {
-            const points = roundendCommand.getScoreboard().get(member.id) || 0;
+            const points =
+              scoreboardCommand.getScoreboard().get(member.id) || 0;
             finalText += `**${member.user.username}**: ${points}\n`;
           });
 
@@ -87,7 +88,7 @@ module.exports = {
             .setColor(0x8b0000)
             .setTitle("🏆 Final Scoreboard - Match Ended")
             .setDescription(finalText || "No players")
-            .setFooter({ text: "Match has ended" })
+            .setFooter({ text: "Match has ended • Scores are saved" })
             .setTimestamp();
 
           await interaction.editReply({
@@ -96,8 +97,8 @@ module.exports = {
             components: [],
           });
 
-          // Reset scores so the next /roundend starts fresh
-          roundendCommand.resetScoreboard();
+          // Reset scores so the next /scoreboard starts fresh
+          scoreboardCommand.resetScoreboard();
         }
       } catch (err) {
         console.error("Button error:", err);

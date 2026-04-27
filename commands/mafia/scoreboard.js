@@ -9,11 +9,11 @@ const {
 let scoreboard = new Map(); // userId => points
 
 module.exports = {
-  name: "roundend",
+  name: "scoreboard",
   category: "mafia",
 
   data: new SlashCommandBuilder()
-    .setName("roundend")
+    .setName("scoreboard")
     .setDescription("Live scoreboard with +1 / -1 buttons"),
 
   async execute(interaction) {
