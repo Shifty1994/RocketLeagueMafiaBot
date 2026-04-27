@@ -14,7 +14,7 @@ module.exports = {
     .setDescription("Start a Mafia game in the current voice channel")
     .addStringOption((option) =>
       option
-        .setName("mode")
+        .setName("gamemode")
         .setDescription("Choose the game mode")
         .setRequired(false)
         .addChoices(
@@ -52,7 +52,7 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    const mode = interaction.options.getString("mode") || "kara";
+    const mode = interaction.options.getString("gamemode") || "kara";
     const forceStart = interaction.options.getBoolean("force") || false;
 
     // Simple defer - this worked before

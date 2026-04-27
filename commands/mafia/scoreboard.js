@@ -5,22 +5,24 @@ const {
   ButtonStyle,
 } = require("discord.js");
 
-// Shared scoreboard state
-const scoreboard = new Map();
+// Per-server scoreboards
+const scoreboards = new Map(); // guildId => Map<userId, points>
 
-function createScoreboard(members) {
+function getScoreboard(guildId) {
+  if (!scoreboards.has(guildId)) {
+    scoreboards.set(guildId, new Map());
+  }
+  return scoreboards.get(guildId);
+}
+
+function createScoreboard(members, guildId) {
+  const scoreboard = getScoreboard(guildId);
+  let text = "**Scoreboard**\n\n";
   const rows = [];
 
   members.forEach((member) => {
     const points = scoreboard.get(member.id) || 0;
-    const username = member.displayName;
-
-    // 👇 fake "label" using a disabled button
-    const label = new ButtonBuilder()
-      .setCustomId(`label_${member.id}`)
-      .setLabel(`${username} — ${points} pts`)
-      .setStyle(ButtonStyle.Secondary)
-      .setDisabled(true);
+    text += `**${member.user.username}**: ${points}\n`;
 
     const plusBtn = new ButtonBuilder()
       .setCustomId(`score_add_${member.id}`)
@@ -32,7 +34,7 @@ function createScoreboard(members) {
       .setLabel("-1")
       .setStyle(ButtonStyle.Danger);
 
-    rows.push(new ActionRowBuilder().addComponents(label, plusBtn, minusBtn));
+    rows.push(new ActionRowBuilder().addComponents(plusBtn, minusBtn));
   });
 
   const endBtn = new ButtonBuilder()
@@ -42,10 +44,7 @@ function createScoreboard(members) {
 
   rows.push(new ActionRowBuilder().addComponents(endBtn));
 
-  return {
-    content: "**Scoreboard**",
-    rows,
-  };
+  return { content: text, rows };
 }
 
 module.exports = {
@@ -58,35 +57,34 @@ module.exports = {
 
   async execute(interaction) {
     const voiceChannel = interaction.member?.voice?.channel;
-
     if (!voiceChannel) {
       return interaction.reply({
         content: "❌ You must be in a voice channel.",
-        ephemeral: true,
+        flags: 64,
       });
     }
 
     const members = voiceChannel.members.filter((m) => !m.user.bot);
-
     if (members.size === 0) {
       return interaction.reply("No players in voice channel.");
     }
 
-    const { content, rows } = createScoreboard(members);
-
+    const { content, rows } = createScoreboard(members, interaction.guild.id);
     await interaction.reply({ content, components: rows });
   },
 
-  updateScore(userId, amount) {
+  updateScore(guildId, userId, amount) {
+    const scoreboard = getScoreboard(guildId);
     const current = scoreboard.get(userId) || 0;
     scoreboard.set(userId, current + amount);
   },
 
-  getScores() {
-    return scoreboard;
+  getScores(guildId) {
+    return getScoreboard(guildId);
   },
 
-  resetScores() {
+  resetScores(guildId) {
+    const scoreboard = getScoreboard(guildId);
     scoreboard.clear();
   },
 

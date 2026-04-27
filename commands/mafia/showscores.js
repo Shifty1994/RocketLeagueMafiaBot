@@ -3,13 +3,14 @@ const scoreboardManager = require("./scoreboard.js");
 
 module.exports = {
   name: "showscores",
+  category: "mafia",
 
   data: new SlashCommandBuilder()
     .setName("showscores")
     .setDescription("Show total scoreboard"),
 
   async execute(interaction) {
-    const scores = scoreboardManager.getScores();
+    const scores = scoreboardManager.getScores(interaction.guild.id);
 
     if (scores.size === 0) {
       return interaction.reply("No points recorded yet.");
