@@ -1,4 +1,4 @@
-const { MessageFlags } = require("discord.js");
+const { MessageFlags, EmbedBuilder } = require("discord.js");
 
 module.exports = {
   name: "interactionCreate",
@@ -37,7 +37,9 @@ module.exports = {
       return;
     }
 
+    // ========================
     // Handle scoreboard buttons
+    // ========================
     if (interaction.isButton()) {
       const customId = interaction.customId;
 
@@ -61,21 +63,41 @@ module.exports = {
           if (voiceChannel) {
             const members = voiceChannel.members.filter((m) => !m.user.bot);
             const roundend = bot.client.commands.get("roundend");
-            const { embed, rows } = roundend.createScoreboardEmbed(members);
+            const { content, rows } = roundend.createScoreboard(members);
 
-            await interaction.editReply({ embeds: [embed], components: rows });
+            await interaction.editReply({ content, components: rows });
           }
-        } else if (customId === "score_reset") {
+        } else if (customId === "score_endmatch") {
           const roundendCommand = bot.client.commands.get("roundend");
-          if (roundendCommand?.resetScoreboard) {
-            roundendCommand.resetScoreboard();
-          }
+          if (!roundendCommand) return;
+
+          // Show final scoreboard as nice embed
+          const members =
+            interaction.member.voice.channel?.members.filter(
+              (m) => !m.user.bot,
+            ) || [];
+          let finalText = "";
+
+          members.forEach((member) => {
+            const points = roundendCommand.getScoreboard().get(member.id) || 0;
+            finalText += `**${member.user.username}**: ${points}\n`;
+          });
+
+          const finalEmbed = new EmbedBuilder()
+            .setColor(0x8b0000)
+            .setTitle("🏆 Final Scoreboard - Match Ended")
+            .setDescription(finalText || "No players")
+            .setFooter({ text: "Match has ended" })
+            .setTimestamp();
 
           await interaction.editReply({
-            content: "✅ Match ended! All scores have been reset.",
-            embeds: [],
+            embeds: [finalEmbed],
+            content: "**Match Finished!** Here are the final scores:",
             components: [],
           });
+
+          // Reset scores so the next /roundend starts fresh
+          roundendCommand.resetScoreboard();
         }
       } catch (err) {
         console.error("Button error:", err);

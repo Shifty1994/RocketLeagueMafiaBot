@@ -14,7 +14,7 @@ module.exports = {
 
   data: new SlashCommandBuilder()
     .setName("roundend")
-    .setDescription("Show live scoreboard with +1 / -1 buttons per player"),
+    .setDescription("Live scoreboard with +1 / -1 buttons"),
 
   async execute(interaction) {
     const voiceChannel = interaction.member?.voice?.channel;
@@ -26,14 +26,13 @@ module.exports = {
     }
 
     const members = voiceChannel.members.filter((m) => !m.user.bot);
-
     if (members.size === 0) {
       return interaction.reply("No players in voice channel.");
     }
 
-    const { embed, rows } = createScoreboardEmbed(members);
+    const { content, rows } = createScoreboard(members);
 
-    await interaction.reply({ embeds: [embed], components: rows });
+    await interaction.reply({ content, components: rows });
   },
 
   updateScoreboard(userId, amount) {
@@ -50,14 +49,14 @@ module.exports = {
   },
 };
 
-// Helper function
-function createScoreboardEmbed(members) {
-  let description = "";
+function createScoreboard(members) {
+  let text = "**Scoreboard**\n\n";
   const rows = [];
 
   members.forEach((member) => {
     const points = scoreboard.get(member.id) || 0;
-    description += `**${member.user.username}**: ${points}\n`;
+
+    text += `**${member.user.username}**: ${points}\n`;
 
     const plusBtn = new ButtonBuilder()
       .setCustomId(`score_add_${member.id}`)
@@ -69,28 +68,18 @@ function createScoreboardEmbed(members) {
       .setLabel("-1")
       .setStyle(ButtonStyle.Danger);
 
+    // One row per player: name/score above, buttons below (best compromise)
     rows.push(new ActionRowBuilder().addComponents(plusBtn, minusBtn));
   });
 
-  // Add "End Match & Reset" button at the bottom
-  const resetBtn = new ButtonBuilder()
-    .setCustomId("score_reset")
-    .setLabel("End Match & Reset Scores")
-    .setStyle(ButtonStyle.Danger);
+  const endBtn = new ButtonBuilder()
+    .setCustomId("score_endmatch")
+    .setLabel("End Match")
+    .setStyle(ButtonStyle.Secondary);
 
-  const resetRow = new ActionRowBuilder().addComponents(resetBtn);
+  rows.push(new ActionRowBuilder().addComponents(endBtn));
 
-  const embed = new EmbedBuilder()
-    .setColor(0x8b0000)
-    .setTitle("🏆 Scoreboard")
-    .setDescription(description || "No players")
-    .setFooter({
-      text: "Click +1 or -1 on players • End Match to reset all scores",
-    })
-    .setTimestamp();
-
-  return { embed, rows: [...rows, resetRow] };
+  return { content: text, rows };
 }
 
-// Export helper for interactionCreate
-module.exports.createScoreboardEmbed = createScoreboardEmbed;
+module.exports.createScoreboard = createScoreboard;
