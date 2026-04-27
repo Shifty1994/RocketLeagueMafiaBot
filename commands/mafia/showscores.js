@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const scoreboard = require("./scoreboard.js");
+const scoreboardManager = require("./scoreboard.js");
 
 module.exports = {
   name: "showscores",
@@ -10,15 +10,18 @@ module.exports = {
     .setDescription("Show total scoreboard"),
 
   async execute(interaction) {
-    const scoreboard = scoreboard.getScoreboard();
-    if (scoreboard.size === 0) {
+    const scores = scoreboardManager.getScores();
+
+    if (scores.size === 0) {
       return interaction.reply("No points recorded yet.");
     }
 
     let description = "";
-    for (const [userId, points] of scoreboard) {
+
+    for (const [userId, points] of scores) {
       const member = interaction.guild.members.cache.get(userId);
       const name = member ? member.user.username : "Unknown User";
+
       description += `**${name}**: ${points}\n`;
     }
 

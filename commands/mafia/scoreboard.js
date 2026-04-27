@@ -1,53 +1,12 @@
 const {
   SlashCommandBuilder,
-  EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
 } = require("discord.js");
 
-let scoreboard = new Map(); // userId => points
-
-module.exports = {
-  name: "scoreboard",
-  category: "mafia",
-
-  data: new SlashCommandBuilder()
-    .setName("scoreboard")
-    .setDescription("Live scoreboard with +1 / -1 buttons"),
-
-  async execute(interaction) {
-    const voiceChannel = interaction.member?.voice?.channel;
-    if (!voiceChannel) {
-      return interaction.reply({
-        content: "❌ You must be in a voice channel.",
-        flags: 64,
-      });
-    }
-
-    const members = voiceChannel.members.filter((m) => !m.user.bot);
-    if (members.size === 0) {
-      return interaction.reply("No players in voice channel.");
-    }
-
-    const { content, rows } = createScoreboard(members);
-
-    await interaction.reply({ content, components: rows });
-  },
-
-  updateScoreboard(userId, amount) {
-    const current = scoreboard.get(userId) || 0;
-    scoreboard.set(userId, current + amount);
-  },
-
-  getScoreboard() {
-    return scoreboard;
-  },
-
-  resetScoreboard() {
-    scoreboard.clear();
-  },
-};
+// Shared scoreboard state
+const scoreboard = new Map(); // userId => points
 
 function createScoreboard(members) {
   let text = "**Scoreboard**\n\n";
@@ -68,7 +27,6 @@ function createScoreboard(members) {
       .setLabel("-1")
       .setStyle(ButtonStyle.Danger);
 
-    // One row per player: name/score above, buttons below (best compromise)
     rows.push(new ActionRowBuilder().addComponents(plusBtn, minusBtn));
   });
 
@@ -82,4 +40,49 @@ function createScoreboard(members) {
   return { content: text, rows };
 }
 
-module.exports.createScoreboard = createScoreboard;
+// Export everything cleanly
+module.exports = {
+  name: "scoreboard",
+  category: "mafia",
+
+  data: new SlashCommandBuilder()
+    .setName("scoreboard")
+    .setDescription("Live scoreboard with +1 / -1 buttons"),
+
+  async execute(interaction) {
+    const voiceChannel = interaction.member?.voice?.channel;
+
+    if (!voiceChannel) {
+      return interaction.reply({
+        content: "❌ You must be in a voice channel.",
+        flags: 64,
+      });
+    }
+
+    const members = voiceChannel.members.filter((m) => !m.user.bot);
+
+    if (members.size === 0) {
+      return interaction.reply("No players in voice channel.");
+    }
+
+    const { content, rows } = createScoreboard(members);
+
+    await interaction.reply({ content, components: rows });
+  },
+
+  // logic functions
+  updateScore(userId, amount) {
+    const current = scoreboard.get(userId) || 0;
+    scoreboard.set(userId, current + amount);
+  },
+
+  getScores() {
+    return scoreboard;
+  },
+
+  resetScores() {
+    scoreboard.clear();
+  },
+
+  createScoreboard,
+};
