@@ -3,7 +3,6 @@ const scoreboardManager = require("./scoreboard.js");
 
 module.exports = {
   name: "showscores",
-  category: "mafia",
 
   data: new SlashCommandBuilder()
     .setName("showscores")
@@ -20,16 +19,15 @@ module.exports = {
 
     for (const [userId, points] of scores) {
       const member = interaction.guild.members.cache.get(userId);
-      const name = member ? member.user.username : "Unknown User";
+      const name = member ? member.displayName : "Unknown";
 
-      description += `**${name}**: ${points}\n`;
+      description += `• **${name}** — ${points} pts\n`;
     }
 
     const embed = new EmbedBuilder()
       .setColor(0x8b0000)
       .setTitle("📊 Total Scoreboard")
-      .setDescription(description)
-      .setTimestamp();
+      .setDescription(description);
 
     await interaction.reply({ embeds: [embed] });
   },

@@ -6,16 +6,21 @@ const {
 } = require("discord.js");
 
 // Shared scoreboard state
-const scoreboard = new Map(); // userId => points
+const scoreboard = new Map();
 
 function createScoreboard(members) {
-  let text = "**Scoreboard**\n\n";
   const rows = [];
 
   members.forEach((member) => {
     const points = scoreboard.get(member.id) || 0;
+    const username = member.displayName;
 
-    text += `**${member.user.username}**: ${points}\n`;
+    // 👇 fake "label" using a disabled button
+    const label = new ButtonBuilder()
+      .setCustomId(`label_${member.id}`)
+      .setLabel(`${username} — ${points} pts`)
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(true);
 
     const plusBtn = new ButtonBuilder()
       .setCustomId(`score_add_${member.id}`)
@@ -27,7 +32,7 @@ function createScoreboard(members) {
       .setLabel("-1")
       .setStyle(ButtonStyle.Danger);
 
-    rows.push(new ActionRowBuilder().addComponents(plusBtn, minusBtn));
+    rows.push(new ActionRowBuilder().addComponents(label, plusBtn, minusBtn));
   });
 
   const endBtn = new ButtonBuilder()
@@ -37,10 +42,12 @@ function createScoreboard(members) {
 
   rows.push(new ActionRowBuilder().addComponents(endBtn));
 
-  return { content: text, rows };
+  return {
+    content: "**Scoreboard**",
+    rows,
+  };
 }
 
-// Export everything cleanly
 module.exports = {
   name: "scoreboard",
   category: "mafia",
@@ -55,7 +62,7 @@ module.exports = {
     if (!voiceChannel) {
       return interaction.reply({
         content: "❌ You must be in a voice channel.",
-        flags: 64,
+        ephemeral: true,
       });
     }
 
@@ -70,7 +77,6 @@ module.exports = {
     await interaction.reply({ content, components: rows });
   },
 
-  // logic functions
   updateScore(userId, amount) {
     const current = scoreboard.get(userId) || 0;
     scoreboard.set(userId, current + amount);
