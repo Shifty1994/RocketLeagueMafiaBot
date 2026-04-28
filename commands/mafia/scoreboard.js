@@ -20,7 +20,7 @@ function createScoreboard(members, voiceChannel) {
   const voiceChannelId = voiceChannel.id;
   const scoreboard = getScoreboard(voiceChannelId);
 
-  let text = `**Scoreboard — ${voiceChannel.name}**\n\n`;
+  let text = `**Scoreboard in ${voiceChannel.name}**\n\n`;
   const rows = [];
 
   members.forEach((member) => {
