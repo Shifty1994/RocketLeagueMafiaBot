@@ -20,7 +20,6 @@ function createScoreboard(members, voiceChannel) {
   const voiceChannelId = voiceChannel.id;
   const scoreboard = getScoreboard(voiceChannelId);
 
-  let text = `**Scoreboard in ${voiceChannel.name}**\n\n`;
   const rows = [];
 
   members.forEach((member) => {
@@ -54,19 +53,14 @@ function createScoreboard(members, voiceChannel) {
 
   rows.push(new ActionRowBuilder().addComponents(endBtn));
 
-  const infoBtn = new ButtonBuilder()
-    .setCustomId(`score_info_${voiceChannelId}`)
-    .setLabel("ℹ️ Only players in this VC can modify scores")
-    .setStyle(ButtonStyle.Secondary)
-    .setDisabled(true);
-
-  rows.push(new ActionRowBuilder().addComponents(infoBtn));
-
   return {
     embeds: [
       new EmbedBuilder()
         .setColor(0x8b0000)
-        .setTitle(`Scoreboard — ${voiceChannel.name}`),
+        .setTitle(`Scoreboard — ${voiceChannel.name}`)
+        .setFooter({
+          text: "ℹ️ Only players in this voice channel can modify scores",
+        }),
     ],
     components: rows,
   };
