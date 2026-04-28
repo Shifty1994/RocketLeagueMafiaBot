@@ -3,7 +3,9 @@ const { MessageFlags, EmbedBuilder } = require("discord.js");
 module.exports = {
   name: "interactionCreate",
   run: async (bot, interaction) => {
+    // ========================
     // Slash Commands
+    // ========================
     if (interaction.isChatInputCommand()) {
       const command = bot.client.commands.get(
         interaction.commandName.toLowerCase(),
@@ -11,12 +13,10 @@ module.exports = {
 
       if (!command?.execute) {
         if (!interaction.replied && !interaction.deferred) {
-          await interaction
-            .reply({
-              content: "This command is not implemented yet.",
-              flags: MessageFlags.Ephemeral,
-            })
-            .catch(() => {});
+          await interaction.reply({
+            content: "This command is not implemented yet.",
+            flags: MessageFlags.Ephemeral,
+          });
         }
         return;
       }
@@ -34,11 +34,12 @@ module.exports = {
           flags: MessageFlags.Ephemeral,
         }).catch(() => {});
       }
+
       return;
     }
 
     // ========================
-    // Scoreboard Buttons - Simple Version
+    // Scoreboard Buttons
     // ========================
     if (interaction.isButton()) {
       const customId = interaction.customId;
@@ -47,70 +48,85 @@ module.exports = {
         await interaction.deferUpdate().catch(() => {});
 
         const scoreboardCommand = bot.client.commands.get("scoreboard");
-        if (!scoreboardCommand) {
-          console.log("Scoreboard command not found");
-          return;
-        }
+        if (!scoreboardCommand) return;
 
-        const guildId = interaction.guild?.id;
-        if (!guildId) return;
+        const voiceChannel = interaction.member?.voice?.channel;
+        if (!voiceChannel) return;
 
-        console.log(`Button pressed: ${customId}`); // ← Debug line
+        const parts = customId.split("_");
+        const action = parts[1];
+        const voiceChannelId = parts[2];
+        const userId = parts[3];
 
-        if (
-          customId.startsWith("score_add_") ||
-          customId.startsWith("score_sub_")
-        ) {
-          const [, action, userId] = customId.split("_");
+        // Prevent interaction from other channels
+        if (voiceChannel.id !== voiceChannelId) return;
+
+        // ========================
+        // +1 / -1
+        // ========================
+        if (action === "add" || action === "sub") {
           const amount = action === "add" ? 1 : -1;
 
-          scoreboardCommand.updateScore(guildId, userId, amount);
+          scoreboardCommand.updateScore(voiceChannelId, userId, amount);
 
-          const voiceChannel = interaction.member?.voice?.channel;
-          if (voiceChannel) {
-            const members = voiceChannel.members.filter((m) => !m.user.bot);
-            const { content, rows } = scoreboardCommand.createScoreboard(
-              members,
-              guildId,
-            );
+          const members = voiceChannel.members.filter((m) => !m.user.bot);
+          const { embeds, components: rows } =
+            scoreboardCommand.createScoreboard(members, voiceChannel);
 
-            await interaction
-              .editReply({ content, components: rows })
-              .catch(() => {});
-          }
-        } else if (customId === "score_endmatch") {
-          const voiceChannel = interaction.member?.voice?.channel;
-          if (!voiceChannel) return;
+          await interaction.editReply({
+            embeds,
+            components: rows,
+          });
+        }
 
+        // ========================
+        // End Match
+        // ========================
+        else if (action === "endmatch") {
           const members = voiceChannel.members.filter((m) => !m.user.bot);
 
           let finalText = "";
+          let highest = -Infinity;
+          let winners = [];
+
           members.forEach((member) => {
             const points =
-              scoreboardCommand.getScores(guildId).get(member.id) || 0;
-            finalText += `• **${member.user.username}** — ${points} pts\n`;
+              scoreboardCommand.getScores(voiceChannelId).get(member.id) || 0;
+
+            if (points > highest) {
+              highest = points;
+              winners = [member.displayName];
+            } else if (points === highest) {
+              winners.push(member.displayName);
+            }
+
+            finalText += `• **${member.displayName}** — ${points} pts\n`;
           });
+
+          const winnerText =
+            winners.length === 1
+              ? `🏆 Winner: **${winners[0]}** (${highest} pts)`
+              : `🏆 Winners: **${winners.join(", ")}** (${highest} pts)`;
 
           const embed = new EmbedBuilder()
             .setColor(0x8b0000)
             .setTitle("🏁 Match Ended")
-            .setDescription(finalText || "No players")
-            .setFooter({ text: "Scores have been reset for the next match" })
+            .setDescription(`${winnerText}\n\n${finalText}`)
+            .setFooter({ text: "Scores reset for next match" })
             .setTimestamp();
 
-          await interaction
-            .editReply({
-              embeds: [embed],
-              content: "**Match Finished!** Here are the final scores:",
-              components: [],
-            })
-            .catch(() => {});
+          await interaction.editReply({
+            embeds: [embed],
+            content: "**Match Finished!**",
+            components: [],
+          });
 
-          scoreboardCommand.resetScores(guildId);
+          scoreboardCommand.resetScores(voiceChannelId);
         }
       } catch (err) {
         console.error("Button error:", err);
       }
+
       return;
     }
   },

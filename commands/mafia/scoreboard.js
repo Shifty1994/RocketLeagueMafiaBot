@@ -3,48 +3,73 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  EmbedBuilder,
 } = require("discord.js");
 
-// Per-server scoreboards
-const scoreboards = new Map(); // guildId => Map<userId, points>
+// voiceChannelId => Map<userId, points>
+const scoreboards = new Map();
 
-function getScoreboard(guildId) {
-  if (!scoreboards.has(guildId)) {
-    scoreboards.set(guildId, new Map());
+function getScoreboard(voiceChannelId) {
+  if (!scoreboards.has(voiceChannelId)) {
+    scoreboards.set(voiceChannelId, new Map());
   }
-  return scoreboards.get(guildId);
+  return scoreboards.get(voiceChannelId);
 }
 
-function createScoreboard(members, guildId) {
-  const scoreboard = getScoreboard(guildId);
-  let text = "**Scoreboard**\n\n";
+function createScoreboard(members, voiceChannel) {
+  const voiceChannelId = voiceChannel.id;
+  const scoreboard = getScoreboard(voiceChannelId);
+
+  let text = `**Scoreboard — ${voiceChannel.name}**\n\n`;
   const rows = [];
 
   members.forEach((member) => {
     const points = scoreboard.get(member.id) || 0;
-    text += `**${member.user.username}**: ${points}\n`;
+
+    const labelBtn = new ButtonBuilder()
+      .setCustomId(`label_${member.id}`)
+      .setLabel(`${member.displayName}: ${points}`)
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(true);
 
     const plusBtn = new ButtonBuilder()
-      .setCustomId(`score_add_${member.id}`)
+      .setCustomId(`score_add_${voiceChannelId}_${member.id}`)
       .setLabel("+1")
       .setStyle(ButtonStyle.Success);
 
     const minusBtn = new ButtonBuilder()
-      .setCustomId(`score_sub_${member.id}`)
+      .setCustomId(`score_sub_${voiceChannelId}_${member.id}`)
       .setLabel("-1")
       .setStyle(ButtonStyle.Danger);
 
-    rows.push(new ActionRowBuilder().addComponents(plusBtn, minusBtn));
+    rows.push(
+      new ActionRowBuilder().addComponents(labelBtn, plusBtn, minusBtn),
+    );
   });
 
   const endBtn = new ButtonBuilder()
-    .setCustomId("score_endmatch")
+    .setCustomId(`score_endmatch_${voiceChannelId}`)
     .setLabel("End Match")
     .setStyle(ButtonStyle.Secondary);
 
   rows.push(new ActionRowBuilder().addComponents(endBtn));
 
-  return { content: text, rows };
+  const infoBtn = new ButtonBuilder()
+    .setCustomId(`score_info_${voiceChannelId}`)
+    .setLabel("OBS: Only players in this voice channel can modify scores")
+    .setStyle(ButtonStyle.Secondary)
+    .setDisabled(true);
+
+  rows.push(new ActionRowBuilder().addComponents(infoBtn));
+
+  return {
+    embeds: [
+      new EmbedBuilder()
+        .setColor(0x8b0000)
+        .setTitle(`Scoreboard — ${voiceChannel.name}`),
+    ],
+    components: rows,
+  };
 }
 
 module.exports = {
@@ -57,6 +82,7 @@ module.exports = {
 
   async execute(interaction) {
     const voiceChannel = interaction.member?.voice?.channel;
+
     if (!voiceChannel) {
       return interaction.reply({
         content: "❌ You must be in a voice channel.",
@@ -65,27 +91,30 @@ module.exports = {
     }
 
     const members = voiceChannel.members.filter((m) => !m.user.bot);
+
     if (members.size === 0) {
       return interaction.reply("No players in voice channel.");
     }
 
-    const { content, rows } = createScoreboard(members, interaction.guild.id);
-    await interaction.reply({ content, components: rows });
+    const { embeds, components: rows } = createScoreboard(
+      members,
+      voiceChannel,
+    );
+    await interaction.reply({ embeds, components: rows });
   },
 
-  updateScore(guildId, userId, amount) {
-    const scoreboard = getScoreboard(guildId);
+  updateScore(voiceChannelId, userId, amount) {
+    const scoreboard = getScoreboard(voiceChannelId);
     const current = scoreboard.get(userId) || 0;
     scoreboard.set(userId, current + amount);
   },
 
-  getScores(guildId) {
-    return getScoreboard(guildId);
+  getScores(voiceChannelId) {
+    return getScoreboard(voiceChannelId);
   },
 
-  resetScores(guildId) {
-    const scoreboard = getScoreboard(guildId);
-    scoreboard.clear();
+  resetScores(voiceChannelId) {
+    getScoreboard(voiceChannelId).clear();
   },
 
   createScoreboard,

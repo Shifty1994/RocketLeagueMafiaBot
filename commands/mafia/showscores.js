@@ -7,10 +7,19 @@ module.exports = {
 
   data: new SlashCommandBuilder()
     .setName("showscores")
-    .setDescription("Show total scoreboard"),
+    .setDescription("Show current scoreboard for your voice channel"),
 
   async execute(interaction) {
-    const scores = scoreboardManager.getScores(interaction.guild.id);
+    const voiceChannel = interaction.member?.voice?.channel;
+
+    if (!voiceChannel) {
+      return interaction.reply({
+        content: "❌ You must be in a voice channel.",
+        flags: 64,
+      });
+    }
+
+    const scores = scoreboardManager.getScores(voiceChannel.id);
 
     if (scores.size === 0) {
       return interaction.reply("No points recorded yet.");
@@ -27,7 +36,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor(0x8b0000)
-      .setTitle("📊 Total Scoreboard")
+      .setTitle(`📊 Scoreboard — ${voiceChannel.name}`)
       .setDescription(description);
 
     await interaction.reply({ embeds: [embed] });
