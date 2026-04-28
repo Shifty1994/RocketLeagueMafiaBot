@@ -56,7 +56,7 @@ function createScoreboard(members, voiceChannel) {
 
   const infoBtn = new ButtonBuilder()
     .setCustomId(`score_info_${voiceChannelId}`)
-    .setLabel("OBS: Only players in this voice channel can modify scores")
+    .setLabel("ℹ️ Only players in this VC can modify scores")
     .setStyle(ButtonStyle.Secondary)
     .setDisabled(true);
 

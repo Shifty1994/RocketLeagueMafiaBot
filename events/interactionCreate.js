@@ -111,8 +111,10 @@ module.exports = {
           const embed = new EmbedBuilder()
             .setColor(0x8b0000)
             .setTitle("🏁 Match Ended")
-            .setDescription(`${winnerText}\n\n${finalText}`)
-            .setFooter({ text: "Scores reset for next match" })
+            .setDescription(
+              `📍 Voice Channel: **${voiceChannel.name}**\n\n${winnerText}\n\n${finalText}`,
+            )
+            .setFooter({ text: "Scores have been reset for the next match" })
             .setTimestamp();
 
           await interaction.editReply({
