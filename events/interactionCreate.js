@@ -11,26 +11,18 @@ module.exports = {
         interaction.commandName.toLowerCase(),
       );
 
-      if (!command?.execute) {
-        if (!interaction.replied && !interaction.deferred) {
-          await interaction.reply({
-            content: "This command is not implemented yet.",
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-        return;
-      }
+      if (!command?.execute) return;
 
       try {
         await command.execute(interaction);
       } catch (error) {
-        console.error("Error executing slash command:", error);
+        console.error(error);
 
         const replyMethod =
           interaction.replied || interaction.deferred ? "followUp" : "reply";
 
         await interaction[replyMethod]({
-          content: "There was an error while executing this command!",
+          content: "Error executing command.",
           flags: MessageFlags.Ephemeral,
         }).catch(() => {});
       }
@@ -39,7 +31,7 @@ module.exports = {
     }
 
     // ========================
-    // Buttons
+    // BUTTONS
     // ========================
     if (interaction.isButton()) {
       const customId = interaction.customId;
@@ -53,102 +45,139 @@ module.exports = {
         const voiceChannel = interaction.member?.voice?.channel;
         if (!voiceChannel) return;
 
+        const vcId = voiceChannel.id;
+
         // ========================
         // PLAYER CLICK
         // ========================
         if (customId.startsWith("score_player_")) {
           const [, , voiceChannelId, userId] = customId.split("_");
+          if (vcId !== voiceChannelId) return;
 
-          if (voiceChannel.id !== voiceChannelId) return;
-
-          const mode = scoreboardCommand.getMode(voiceChannelId);
+          const mode = scoreboardCommand.getMode(vcId);
           const amount = mode === "add" ? 1 : -1;
 
-          scoreboardCommand.updateScore(voiceChannelId, userId, amount);
+          scoreboardCommand.updateScore(vcId, userId, amount);
 
           const members = voiceChannel.members.filter((m) => !m.user.bot);
+
           const { embeds, components } = scoreboardCommand.createScoreboard(
             members,
             voiceChannel,
           );
 
-          await interaction.editReply({ embeds, components });
+          return interaction.editReply({ embeds, components });
+        }
+
+        // ========================
+        // NEXT PAGE
+        // ========================
+        if (customId.startsWith("score_next_")) {
+          const [, , voiceChannelId] = customId.split("_");
+          if (vcId !== voiceChannelId) return;
+
+          const current = scoreboardCommand.getPage(vcId);
+          scoreboardCommand.setPage(vcId, current + 1);
+        }
+
+        // ========================
+        // PREV PAGE
+        // ========================
+        if (customId.startsWith("score_prev_")) {
+          const [, , voiceChannelId] = customId.split("_");
+          if (vcId !== voiceChannelId) return;
+
+          const current = scoreboardCommand.getPage(vcId);
+          scoreboardCommand.setPage(vcId, Math.max(0, current - 1));
         }
 
         // ========================
         // TOGGLE MODE
         // ========================
-        else if (customId.startsWith("score_toggle_")) {
+        if (customId.startsWith("score_toggle_")) {
           const [, , voiceChannelId] = customId.split("_");
+          if (vcId !== voiceChannelId) return;
 
-          if (voiceChannel.id !== voiceChannelId) return;
-
-          scoreboardCommand.toggleMode(voiceChannelId);
-
-          const members = voiceChannel.members.filter((m) => !m.user.bot);
-          const { embeds, components } = scoreboardCommand.createScoreboard(
-            members,
-            voiceChannel,
-          );
-
-          await interaction.editReply({ embeds, components });
+          scoreboardCommand.toggleMode(vcId);
         }
 
         // ========================
         // END MATCH
         // ========================
-        else if (customId.startsWith("score_endmatch_")) {
+        if (customId.startsWith("score_endmatch_")) {
           const [, , voiceChannelId] = customId.split("_");
-
-          if (voiceChannel.id !== voiceChannelId) return;
+          if (vcId !== voiceChannelId) return;
 
           const members = voiceChannel.members.filter((m) => !m.user.bot);
+          const scoresMap = scoreboardCommand.getScores(vcId);
 
-          let finalText = "";
-          let highest = -Infinity;
-          let winners = [];
+          // Build leaderboard array
+          const results = [];
 
-          members.forEach((member) => {
-            const points =
-              scoreboardCommand.getScores(voiceChannelId).get(member.id) || 0;
+          for (const member of members.values()) {
+            const points = scoresMap.get(member.id) || 0;
 
-            if (points > highest) {
-              highest = points;
-              winners = [member.displayName];
-            } else if (points === highest) {
-              winners.push(member.displayName);
-            }
+            results.push({
+              name: member.displayName,
+              points,
+            });
+          }
 
-            finalText += `• **${member.displayName}** — ${points} pts\n`;
-          });
+          // Sort highest first
+          results.sort((a, b) => b.points - a.points);
+
+          const highest = results[0]?.points ?? 0;
+          const winners = results.filter((p) => p.points === highest);
 
           const winnerText =
             winners.length === 1
-              ? `🏆 Winner: **${winners[0]}** (${highest} pts)`
-              : `🏆 Winners: **${winners.join(", ")}** (${highest} pts)`;
+              ? `🏆 **Winner:** ${winners[0].name} (${highest} pts)`
+              : `🏆 **Winners:** ${winners.map((w) => w.name).join(", ")} (${highest} pts)`;
+
+          const leaderboardText = results
+            .map((p, i) => {
+              const medal =
+                i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "•";
+
+              return `${medal} **${p.name}** — ${p.points} pts`;
+            })
+            .join("\n");
 
           const embed = new EmbedBuilder()
             .setColor(0x8b0000)
             .setTitle("🏁 Match Ended")
             .setDescription(
-              `📍 Voice Channel: **${voiceChannel.name}**\n\n${winnerText}\n\n${finalText}`,
+              `📍 **Voice Channel:** ${voiceChannel.name}\n\n` +
+                `${winnerText}\n\n` +
+                `📊 **Final Standings:**\n${leaderboardText}`,
             )
             .setFooter({ text: "Scores have been reset for the next match" })
             .setTimestamp();
 
           await interaction.editReply({
             embeds: [embed],
-            content: "**Match Finished!**",
+            content: null,
             components: [],
           });
 
-          scoreboardCommand.resetScores(voiceChannelId);
+          scoreboardCommand.resetScores(vcId);
+          return;
         }
+
+        // ========================
+        // REFRESH UI (for paging/toggle)
+        // ========================
+        const members = voiceChannel.members.filter((m) => !m.user.bot);
+
+        const { embeds, components } = scoreboardCommand.createScoreboard(
+          members,
+          voiceChannel,
+        );
+
+        await interaction.editReply({ embeds, components });
       } catch (err) {
         console.error("Button error:", err);
       }
-
-      return;
     }
   },
 };

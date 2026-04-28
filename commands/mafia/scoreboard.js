@@ -9,6 +9,9 @@ const {
 // voiceChannelId => Map<userId, points>
 const scoreboards = new Map();
 
+// voiceChannelId => page number
+const scorePages = new Map();
+
 // voiceChannelId => "add" | "sub"
 const scoreModes = new Map();
 
@@ -19,18 +22,49 @@ function getScoreboard(voiceChannelId) {
   return scoreboards.get(voiceChannelId);
 }
 
+function getPage(voiceChannelId) {
+  return scorePages.get(voiceChannelId) || 0;
+}
+
+function setPage(voiceChannelId, page) {
+  scorePages.set(voiceChannelId, page);
+}
+
+function getMode(voiceChannelId) {
+  return scoreModes.get(voiceChannelId) || "add";
+}
+
+function toggleMode(voiceChannelId) {
+  const current = getMode(voiceChannelId);
+  scoreModes.set(voiceChannelId, current === "add" ? "sub" : "add");
+}
+
+function resetState(voiceChannelId) {
+  scoreboards.delete(voiceChannelId);
+  scorePages.delete(voiceChannelId);
+  scoreModes.delete(voiceChannelId);
+}
+
 function createScoreboard(members, voiceChannel) {
   const voiceChannelId = voiceChannel.id;
   const scoreboard = getScoreboard(voiceChannelId);
 
-  const mode = scoreModes.get(voiceChannelId) || "add";
+  const allMembers = Array.from(members.values());
+
+  const perPage = 5;
+  const page = getPage(voiceChannelId);
+  const totalPages = Math.max(1, Math.ceil(allMembers.length / perPage));
+
+  const safePage = Math.min(page, totalPages - 1);
+  setPage(voiceChannelId, safePage);
+
+  const start = safePage * perPage;
+  const pagedMembers = allMembers.slice(start, start + perPage);
 
   const rows = [];
-  let currentRow = new ActionRowBuilder();
+  let row = new ActionRowBuilder();
 
-  let count = 0;
-
-  members.forEach((member) => {
+  pagedMembers.forEach((member) => {
     const points = scoreboard.get(member.id) || 0;
 
     const btn = new ButtonBuilder()
@@ -38,18 +72,36 @@ function createScoreboard(members, voiceChannel) {
       .setLabel(`${member.displayName}: ${points}`)
       .setStyle(ButtonStyle.Secondary);
 
-    currentRow.addComponents(btn);
-    count++;
-
-    if (count % 5 === 0) {
-      rows.push(currentRow);
-      currentRow = new ActionRowBuilder();
-    }
+    row.addComponents(btn);
   });
 
-  if (currentRow.components.length > 0) {
-    rows.push(currentRow);
+  if (row.components.length > 0) {
+    rows.push(row);
   }
+
+  // NAVIGATION ROW
+  const prevBtn = new ButtonBuilder()
+    .setCustomId(`score_prev_${voiceChannelId}`)
+    .setLabel("⬅ Prev")
+    .setStyle(ButtonStyle.Secondary)
+    .setDisabled(safePage === 0);
+
+  const pageBtn = new ButtonBuilder()
+    .setCustomId(`score_page_${voiceChannelId}`)
+    .setLabel(`Page ${safePage + 1}/${totalPages}`)
+    .setStyle(ButtonStyle.Secondary)
+    .setDisabled(true);
+
+  const nextBtn = new ButtonBuilder()
+    .setCustomId(`score_next_${voiceChannelId}`)
+    .setLabel("Next ➡")
+    .setStyle(ButtonStyle.Secondary)
+    .setDisabled(safePage >= totalPages - 1);
+
+  rows.push(new ActionRowBuilder().addComponents(prevBtn, pageBtn, nextBtn));
+
+  // CONTROL ROW
+  const mode = getMode(voiceChannelId);
 
   const modeBtn = new ButtonBuilder()
     .setCustomId(`score_toggle_${voiceChannelId}`)
@@ -69,7 +121,7 @@ function createScoreboard(members, voiceChannel) {
         .setColor(0x8b0000)
         .setTitle(`Scoreboard — ${voiceChannel.name}`)
         .setFooter({
-          text: "Click a player to modify score • Toggle mode for + / -",
+          text: "Click player to modify score • Use arrows to change page",
         }),
     ],
     components: rows,
@@ -82,7 +134,7 @@ module.exports = {
 
   data: new SlashCommandBuilder()
     .setName("scoreboard")
-    .setDescription("Live scoreboard with buttons"),
+    .setDescription("Live scoreboard with pagination"),
 
   async execute(interaction) {
     const voiceChannel = interaction.member?.voice?.channel;
@@ -115,20 +167,11 @@ module.exports = {
     return getScoreboard(voiceChannelId);
   },
 
-  resetScores(voiceChannelId) {
-    getScoreboard(voiceChannelId).clear();
-    scoreModes.delete(voiceChannelId);
-  },
-
-  toggleMode(voiceChannelId) {
-    const current = scoreModes.get(voiceChannelId) || "add";
-    const next = current === "add" ? "sub" : "add";
-    scoreModes.set(voiceChannelId, next);
-  },
-
-  getMode(voiceChannelId) {
-    return scoreModes.get(voiceChannelId) || "add";
-  },
+  resetScores: resetState,
 
   createScoreboard,
+  getMode,
+  toggleMode,
+  getPage,
+  setPage,
 };
