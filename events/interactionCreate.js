@@ -39,7 +39,7 @@ module.exports = {
     }
 
     // ========================
-    // Scoreboard Buttons
+    // Buttons
     // ========================
     if (interaction.isButton()) {
       const customId = interaction.customId;
@@ -53,36 +53,55 @@ module.exports = {
         const voiceChannel = interaction.member?.voice?.channel;
         if (!voiceChannel) return;
 
-        const parts = customId.split("_");
-        const action = parts[1];
-        const voiceChannelId = parts[2];
-        const userId = parts[3];
-
-        // Prevent interaction from other channels
-        if (voiceChannel.id !== voiceChannelId) return;
-
         // ========================
-        // +1 / -1
+        // PLAYER CLICK
         // ========================
-        if (action === "add" || action === "sub") {
-          const amount = action === "add" ? 1 : -1;
+        if (customId.startsWith("score_player_")) {
+          const [, , voiceChannelId, userId] = customId.split("_");
+
+          if (voiceChannel.id !== voiceChannelId) return;
+
+          const mode = scoreboardCommand.getMode(voiceChannelId);
+          const amount = mode === "add" ? 1 : -1;
 
           scoreboardCommand.updateScore(voiceChannelId, userId, amount);
 
           const members = voiceChannel.members.filter((m) => !m.user.bot);
-          const { embeds, components: rows } =
-            scoreboardCommand.createScoreboard(members, voiceChannel);
+          const { embeds, components } = scoreboardCommand.createScoreboard(
+            members,
+            voiceChannel,
+          );
 
-          await interaction.editReply({
-            embeds,
-            components: rows,
-          });
+          await interaction.editReply({ embeds, components });
         }
 
         // ========================
-        // End Match
+        // TOGGLE MODE
         // ========================
-        else if (action === "endmatch") {
+        else if (customId.startsWith("score_toggle_")) {
+          const [, , voiceChannelId] = customId.split("_");
+
+          if (voiceChannel.id !== voiceChannelId) return;
+
+          scoreboardCommand.toggleMode(voiceChannelId);
+
+          const members = voiceChannel.members.filter((m) => !m.user.bot);
+          const { embeds, components } = scoreboardCommand.createScoreboard(
+            members,
+            voiceChannel,
+          );
+
+          await interaction.editReply({ embeds, components });
+        }
+
+        // ========================
+        // END MATCH
+        // ========================
+        else if (customId.startsWith("score_endmatch_")) {
+          const [, , voiceChannelId] = customId.split("_");
+
+          if (voiceChannel.id !== voiceChannelId) return;
+
           const members = voiceChannel.members.filter((m) => !m.user.bot);
 
           let finalText = "";
